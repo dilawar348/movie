@@ -58,21 +58,11 @@
             width: 180px;
         }
 
-        .search-box button {
+        .search-box button, .back-btn-top {
             padding: 8px 15px;
             background: #e50914;
             color: #fff;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .back-btn-top {
-            background: #e50914;
-            color: #fff;
-            border: none;
-            padding: 8px 14px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
@@ -93,9 +83,26 @@
             justify-content: center;
         }
 
+        .server-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .server-controls select {
+            padding: 6px 10px;
+            background: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         #player-container iframe {
             width: 90%;
-            height: 80%;
+            height: 75%;
             border: none;
             border-radius: 8px;
         }
@@ -189,11 +196,10 @@
         <div class="search-box">
             <button class="back-btn-top" onclick="getTrendingContent()">🏠 Home / Trending</button>
 
-            <!-- Search Mode -->
             <select id="type-select">
                 <option value="multi">All Content</option>
                 <option value="movie">Movies Only</option>
-                <option value="tv">K-Dramas & Web Series</option>
+                <option value="tv">K-Dramas & Series</option>
             </select>
 
             <input type="text" id="search-input" placeholder="Search Movie or Drama...">
@@ -204,6 +210,18 @@
     <!-- Modal Player -->
     <div id="player-container">
         <span class="close-btn" onclick="closePlayer()">&times;</span>
+        
+        <div class="server-controls">
+            <label style="font-weight: bold;">Switch Server: </label>
+            <select id="server-select" onchange="changeServer()">
+                <option value="vidsrc_in">Server 1 (VidSrc In)</option>
+                <option value="vidsrc_me">Server 2 (VidSrc Me)</option>
+                <option value="vidsrc_cc">Server 3 (VidSrc CC)</option>
+                <option value="autoembed">Server 4 (AutoEmbed - Fast)</option>
+                <option value="smashy">Server 5 (SmashyStream)</option>
+            </select>
+        </div>
+
         <iframe id="video-iframe" src="" allowfullscreen></iframe>
     </div>
 
@@ -226,13 +244,16 @@
         const searchBtn = document.getElementById('search-btn');
         const typeSelect = document.getElementById('type-select');
 
+        let currentMediaId = '';
+        let currentMediaType = '';
+
         // Search Events
         searchBtn.addEventListener('click', searchContent);
         searchInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') searchContent();
         });
 
-        // Fetch Trending Content (Movies & Dramas)
+        // Fetch Trending Content
         async function getTrendingContent() {
             document.getElementById('heading').innerText = 'Trending Movies & K-Dramas';
             moviesGrid.innerHTML = '<p style="color:#fff;">Loading content...</p>';
@@ -247,7 +268,7 @@
             }
         }
 
-        // Search Function
+        // Search Content
         async function searchContent() {
             const query = searchInput.value.trim();
             const searchType = typeSelect.value;
@@ -268,14 +289,14 @@
                 if (data.results && data.results.length > 0) {
                     displayResults(data.results);
                 } else {
-                    moviesGrid.innerHTML = '<p style="color:#e50914; font-size: 18px;">No content found! Check spelling and try again.</p>';
+                    moviesGrid.innerHTML = '<p style="color:#e50914; font-size: 18px;">No content found!</p>';
                 }
             } catch (err) {
                 console.error("Search error:", err);
             }
         }
 
-        // Display Movies/Series Grid
+        // Display Results
         function displayResults(items) {
             moviesGrid.innerHTML = '';
             items.forEach(item => {
@@ -289,7 +310,7 @@
                 card.onclick = () => playMedia(item.id, mediaType);
 
                 card.innerHTML = `
-                    <span class="type-badge">${mediaType === 'tv' ? 'K-Drama / Series' : 'Movie'}</span>
+                    <span class="type-badge">${mediaType === 'tv' ? 'Series / K-Drama' : 'Movie'}</span>
                     <img src="${IMAGE_PATH + item.poster_path}" alt="${title}">
                     <div class="movie-info">
                         <div class="movie-title">${title}</div>
@@ -300,19 +321,39 @@
             });
         }
 
-        // Play Video (Multi-Server Player)
+        // Play Video Function
         function playMedia(id, type) {
+            currentMediaId = id;
+            currentMediaType = type;
+            document.getElementById('server-select').value = 'vidsrc_in';
+            loadServerUrl('vidsrc_in');
+            playerContainer.style.display = 'flex';
+        }
+
+        // Change Server Logic
+        function changeServer() {
+            const selectedServer = document.getElementById('server-select').value;
+            loadServerUrl(selectedServer);
+        }
+
+        function loadServerUrl(serverKey) {
             let embedUrl = '';
-            
-            // VidSrc Multi-language Player URLs
-            if (type === 'tv') {
-                embedUrl = `https://vidsrc.cc/v2/embed/tv/${id}/1/1`;
-            } else {
-                embedUrl = `https://vidsrc.cc/v2/embed/movie/${id}`;
+            const id = currentMediaId;
+            const isTv = currentMediaType === 'tv';
+
+            if (serverKey === 'vidsrc_in') {
+                embedUrl = isTv ? `https://vidsrc.in/embed/tv/${id}/1/1` : `https://vidsrc.in/embed/movie/${id}`;
+            } else if (serverKey === 'vidsrc_me') {
+                embedUrl = isTv ? `https://vidsrc.me/embed/tv?tmdb=${id}&season=1&episode=1` : `https://vidsrc.me/embed/movie?tmdb=${id}`;
+            } else if (serverKey === 'vidsrc_cc') {
+                embedUrl = isTv ? `https://vidsrc.cc/v2/embed/tv/${id}/1/1` : `https://vidsrc.cc/v2/embed/movie/${id}`;
+            } else if (serverKey === 'autoembed') {
+                embedUrl = isTv ? `https://player.autoembed.cc/embed/tv/${id}/1/1` : `https://player.autoembed.cc/embed/movie/${id}`;
+            } else if (serverKey === 'smashy') {
+                embedUrl = isTv ? `https://embed.smashystream.com/playere.php?tmdb=${id}&season=1&episode=1` : `https://embed.smashystream.com/playere.php?tmdb=${id}`;
             }
 
             videoIframe.src = embedUrl;
-            playerContainer.style.display = 'flex';
         }
 
         // Close Video Player
@@ -321,7 +362,7 @@
             playerContainer.style.display = 'none';
         }
 
-        // Initial Load
+        // Initialize Page
         getTrendingContent();
     </script>
 </body>
