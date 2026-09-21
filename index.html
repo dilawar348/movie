@@ -150,7 +150,7 @@
         <h1>MY STREAM</h1>
         <div class="search-box">
             <input type="text" id="search-input" placeholder="Search any movie...">
-            <button onclick="searchMovies()">Search</button>
+            <button id="search-btn">Search</button>
         </div>
     </header>
 
@@ -166,7 +166,6 @@
     </div>
 
     <script>
-        // Demo Read-Only TMDB API Key
         const API_KEY = '203a80846675dc5aec6ff3961867f1a3'; 
         const BASE_URL = 'https://api.themoviedb.org/3';
         const IMAGE_PATH = 'https://image.tmdb.org/t/p/w500';
@@ -174,23 +173,49 @@
         const moviesGrid = document.getElementById('movies-grid');
         const playerContainer = document.getElementById('player-container');
         const videoIframe = document.getElementById('video-iframe');
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
 
-        // Fetch Trending Movies on Load
+        // Search Events (Click & Enter Key)
+        searchBtn.addEventListener('click', searchMovies);
+        searchInput.addEventListener('keyup', function (e) {
+            if (e.key === 'Enter') {
+                searchMovies();
+            }
+        });
+
+        // Fetch Trending Movies
         async function getTrendingMovies() {
-            const res = await fetch(`${BASE_URL}/trending/movie/week?api_key=${API_KEY}`);
-            const data = await res.json();
-            displayMovies(data.results);
+            try {
+                const res = await fetch(`${BASE_URL}/trending/movie/week?api_key=${API_KEY}`);
+                const data = await res.json();
+                displayMovies(data.results);
+            } catch (err) {
+                console.error("Error fetching trending movies:", err);
+            }
         }
 
-        // Search Movies
+        // Search Movies Function
         async function searchMovies() {
-            const query = document.getElementById('search-input').value;
+            const query = searchInput.value.trim();
             if(!query) return;
 
-            document.getElementById('heading').innerText = `Search Results for: ${query}`;
-            const res = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
-            const data = await res.json();
-            displayMovies(data.results);
+            document.getElementById('heading').innerText = `Search Results for: "${query}"`;
+            moviesGrid.innerHTML = '<p style="color:#fff;">Searching...</p>';
+
+            try {
+                const res = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (data.results && data.results.length > 0) {
+                    displayMovies(data.results);
+                } else {
+                    moviesGrid.innerHTML = '<p style="color:#e50914; font-size: 18px;">No movies found!</p>';
+                }
+            } catch (err) {
+                console.error("Error searching movies:", err);
+                moviesGrid.innerHTML = '<p style="color:#fff;">Error loading results. Please try again.</p>';
+            }
         }
 
         // Display Movies Grid
@@ -207,7 +232,7 @@
                     <img src="${IMAGE_PATH + movie.poster_path}" alt="${movie.title}">
                     <div class="movie-info">
                         <div class="movie-title">${movie.title}</div>
-                        <div class="movie-rating">★ ${movie.vote_average.toFixed(1)}</div>
+                        <div class="movie-rating">★ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</div>
                     </div>
                 `;
                 moviesGrid.appendChild(movieCard);
@@ -216,7 +241,6 @@
 
         // Play Movie via Embed Server (VidSrc)
         function playMovie(id) {
-            // Third-Party Embed Server URL using TMDB ID
             const embedUrl = `https://vidsrc.me/embed/movie?tmdb=${id}`;
             videoIframe.src = embedUrl;
             playerContainer.style.display = 'flex';
