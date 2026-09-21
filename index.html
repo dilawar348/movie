@@ -88,16 +88,27 @@
             gap: 10px;
             margin-bottom: 10px;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .server-controls select {
-            padding: 6px 10px;
+            padding: 6px 12px;
             background: #e50914;
             color: #fff;
             border: none;
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
+        }
+
+        .audio-tip {
+            font-size: 12px;
+            color: #ffc107;
+            background: rgba(255,193,7,0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid #ffc107;
         }
 
         #player-container iframe {
@@ -212,14 +223,15 @@
         <span class="close-btn" onclick="closePlayer()">&times;</span>
         
         <div class="server-controls">
-            <label style="font-weight: bold;">Switch Server: </label>
+            <label style="font-weight: bold;">Server: </label>
             <select id="server-select" onchange="changeServer()">
-                <option value="vidsrc_in">Server 1 (VidSrc In)</option>
-                <option value="vidsrc_me">Server 2 (VidSrc Me)</option>
-                <option value="vidsrc_cc">Server 3 (VidSrc CC)</option>
-                <option value="autoembed">Server 4 (AutoEmbed - Fast)</option>
+                <option value="autoembed">Server 1 (AutoEmbed - Best for Hindi/Multi-Audio)</option>
+                <option value="vidsrc_in">Server 2 (VidSrc In)</option>
+                <option value="vidsrc_me">Server 3 (VidSrc Me)</option>
+                <option value="vidsrc_cc">Server 4 (VidSrc CC)</option>
                 <option value="smashy">Server 5 (SmashyStream)</option>
             </select>
+            <span class="audio-tip">💡 Tip: Player Settings ⚙️ se Audio "Hindi" select karein.</span>
         </div>
 
         <iframe id="video-iframe" src="" allowfullscreen></iframe>
@@ -325,8 +337,8 @@
         function playMedia(id, type) {
             currentMediaId = id;
             currentMediaType = type;
-            document.getElementById('server-select').value = 'vidsrc_in';
-            loadServerUrl('vidsrc_in');
+            document.getElementById('server-select').value = 'autoembed';
+            loadServerUrl('autoembed');
             playerContainer.style.display = 'flex';
         }
 
@@ -341,14 +353,14 @@
             const id = currentMediaId;
             const isTv = currentMediaType === 'tv';
 
-            if (serverKey === 'vidsrc_in') {
+            if (serverKey === 'autoembed') {
+                embedUrl = isTv ? `https://player.autoembed.cc/embed/tv/${id}/1/1` : `https://player.autoembed.cc/embed/movie/${id}`;
+            } else if (serverKey === 'vidsrc_in') {
                 embedUrl = isTv ? `https://vidsrc.in/embed/tv/${id}/1/1` : `https://vidsrc.in/embed/movie/${id}`;
             } else if (serverKey === 'vidsrc_me') {
                 embedUrl = isTv ? `https://vidsrc.me/embed/tv?tmdb=${id}&season=1&episode=1` : `https://vidsrc.me/embed/movie?tmdb=${id}`;
             } else if (serverKey === 'vidsrc_cc') {
                 embedUrl = isTv ? `https://vidsrc.cc/v2/embed/tv/${id}/1/1` : `https://vidsrc.cc/v2/embed/movie/${id}`;
-            } else if (serverKey === 'autoembed') {
-                embedUrl = isTv ? `https://player.autoembed.cc/embed/tv/${id}/1/1` : `https://player.autoembed.cc/embed/movie/${id}`;
             } else if (serverKey === 'smashy') {
                 embedUrl = isTv ? `https://embed.smashystream.com/playere.php?tmdb=${id}&season=1&episode=1` : `https://embed.smashystream.com/playere.php?tmdb=${id}`;
             }
