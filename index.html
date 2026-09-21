@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Movie & Drama Stream</title>
+    <title>My Movie & K-Drama Stream</title>
     <style>
         * {
             box-sizing: border-box;
@@ -42,6 +42,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .search-box input, .search-box select {
@@ -54,7 +55,7 @@
         }
 
         .search-box input {
-            width: 200px;
+            width: 180px;
         }
 
         .search-box button {
@@ -67,15 +68,14 @@
             font-weight: bold;
         }
 
-        .back-btn {
-            display: none;
-            padding: 6px 12px;
-            background: #444;
+        .back-btn-top {
+            background: #e50914;
             color: #fff;
             border: none;
+            padding: 8px 14px;
             border-radius: 4px;
             cursor: pointer;
-            margin-bottom: 15px;
+            font-weight: bold;
         }
 
         /* Video Player Modal */
@@ -94,16 +94,16 @@
         }
 
         #player-container iframe {
-            width: 85%;
-            height: 75%;
+            width: 90%;
+            height: 80%;
             border: none;
             border-radius: 8px;
         }
 
         .close-btn {
             position: absolute;
-            top: 20px;
-            right: 30px;
+            top: 15px;
+            right: 25px;
             font-size: 35px;
             color: #fff;
             cursor: pointer;
@@ -111,7 +111,7 @@
 
         /* Movies Grid */
         .container {
-            padding: 30px 5%;
+            padding: 20px 5%;
         }
 
         .section-header {
@@ -127,7 +127,7 @@
 
         .movies-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
             gap: 20px;
         }
 
@@ -146,15 +146,15 @@
 
         .movie-card img {
             width: 100%;
-            height: 260px;
+            height: 250px;
             object-fit: cover;
         }
 
         .type-badge {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(229, 9, 20, 0.85);
+            top: 8px;
+            left: 8px;
+            background: rgba(229, 9, 20, 0.9);
             padding: 3px 6px;
             font-size: 10px;
             font-weight: bold;
@@ -167,7 +167,7 @@
         }
 
         .movie-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             white-space: nowrap;
             overflow: hidden;
@@ -175,9 +175,9 @@
         }
 
         .movie-rating {
-            font-size: 12px;
+            font-size: 11px;
             color: #ffc107;
-            margin-top: 5px;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -185,23 +185,18 @@
 
     <header>
         <h1 onclick="getTrendingContent()">MY STREAM</h1>
+        
         <div class="search-box">
-            <!-- Content Type Filter -->
+            <button class="back-btn-top" onclick="getTrendingContent()">🏠 Home / Trending</button>
+
+            <!-- Search Mode -->
             <select id="type-select">
-                <option value="multi">All (Movies & Dramas)</option>
+                <option value="multi">All Content</option>
                 <option value="movie">Movies Only</option>
-                <option value="tv">K-Dramas / Series</option>
+                <option value="tv">K-Dramas & Web Series</option>
             </select>
 
-            <!-- Language Filter -->
-            <select id="lang-select">
-                <option value="all">All Languages</option>
-                <option value="hi">Hindi Dubbed / Sub</option>
-                <option value="ko">Korean (K-Drama)</option>
-                <option value="en">English</option>
-            </select>
-
-            <input type="text" id="search-input" placeholder="Search Movie, K-Drama...">
+            <input type="text" id="search-input" placeholder="Search Movie or Drama...">
             <button id="search-btn">Search</button>
         </div>
     </header>
@@ -213,7 +208,6 @@
     </div>
 
     <div class="container">
-        <button id="back-btn" class="back-btn" onclick="getTrendingContent()">← Back to Trending</button>
         <div class="section-header">
             <h2 class="section-title" id="heading">Trending Movies & K-Dramas</h2>
         </div>
@@ -230,19 +224,16 @@
         const videoIframe = document.getElementById('video-iframe');
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
-        const backBtn = document.getElementById('back-btn');
         const typeSelect = document.getElementById('type-select');
-        const langSelect = document.getElementById('lang-select');
 
-        // Event Listeners
+        // Search Events
         searchBtn.addEventListener('click', searchContent);
         searchInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') searchContent();
         });
 
-        // Fetch Trending Movies + K-Dramas / TV Shows
+        // Fetch Trending Content (Movies & Dramas)
         async function getTrendingContent() {
-            backBtn.style.display = 'none';
             document.getElementById('heading').innerText = 'Trending Movies & K-Dramas';
             moviesGrid.innerHTML = '<p style="color:#fff;">Loading content...</p>';
             searchInput.value = '';
@@ -252,62 +243,53 @@
                 const data = await res.json();
                 displayResults(data.results);
             } catch (err) {
-                console.error("Error fetching trending content:", err);
+                console.error("Error loading trending content:", err);
             }
         }
 
-        // Search Movies, Series & K-Dramas with Language Filter
+        // Search Function
         async function searchContent() {
             const query = searchInput.value.trim();
             const searchType = typeSelect.value;
-            const targetLang = langSelect.value;
 
-            if(!query && targetLang === 'all') {
+            if (!query) {
                 getTrendingContent();
                 return;
             }
 
-            backBtn.style.display = 'inline-block';
-            document.getElementById('heading').innerText = query ? `Results for: "${query}"` : `Filtered Content`;
+            document.getElementById('heading').innerText = `Results for: "${query}"`;
             moviesGrid.innerHTML = '<p style="color:#fff;">Searching...</p>';
 
             try {
-                let url = `${BASE_URL}/search/${searchType}?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
-                
-                // Add language filter if selected
-                if(targetLang !== 'all') {
-                    url += `&with_original_language=${targetLang}`;
-                }
-
+                const url = `${BASE_URL}/search/${searchType}?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
                 const res = await fetch(url);
                 const data = await res.json();
 
                 if (data.results && data.results.length > 0) {
                     displayResults(data.results);
                 } else {
-                    moviesGrid.innerHTML = '<p style="color:#e50914; font-size: 18px;">No results found! Try changing filter or search name.</p>';
+                    moviesGrid.innerHTML = '<p style="color:#e50914; font-size: 18px;">No content found! Check spelling and try again.</p>';
                 }
             } catch (err) {
-                console.error("Error searching content:", err);
-                moviesGrid.innerHTML = '<p style="color:#fff;">Error loading results.</p>';
+                console.error("Search error:", err);
             }
         }
 
-        // Display Items Grid
+        // Display Movies/Series Grid
         function displayResults(items) {
             moviesGrid.innerHTML = '';
             items.forEach(item => {
                 const title = item.title || item.name;
                 const mediaType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
                 
-                if(!item.poster_path) return;
+                if (!item.poster_path) return;
 
                 const card = document.createElement('div');
                 card.classList.add('movie-card');
                 card.onclick = () => playMedia(item.id, mediaType);
 
                 card.innerHTML = `
-                    <span class="type-badge">${mediaType === 'tv' ? 'Series/Drama' : 'Movie'}</span>
+                    <span class="type-badge">${mediaType === 'tv' ? 'K-Drama / Series' : 'Movie'}</span>
                     <img src="${IMAGE_PATH + item.poster_path}" alt="${title}">
                     <div class="movie-info">
                         <div class="movie-title">${title}</div>
@@ -318,15 +300,15 @@
             });
         }
 
-        // Play Video via Embed Server (VidSrc)
+        // Play Video (Multi-Server Player)
         function playMedia(id, type) {
             let embedUrl = '';
             
-            // VidSrc automatically handles Movie or TV/Drama Episode 1
-            if(type === 'tv') {
-                embedUrl = `https://vidsrc.me/embed/tv?tmdb=${id}&season=1&episode=1`;
+            // VidSrc Multi-language Player URLs
+            if (type === 'tv') {
+                embedUrl = `https://vidsrc.cc/v2/embed/tv/${id}/1/1`;
             } else {
-                embedUrl = `https://vidsrc.me/embed/movie?tmdb=${id}`;
+                embedUrl = `https://vidsrc.cc/v2/embed/movie/${id}`;
             }
 
             videoIframe.src = embedUrl;
@@ -339,7 +321,7 @@
             playerContainer.style.display = 'none';
         }
 
-        // Initialize Page
+        // Initial Load
         getTrendingContent();
     </script>
 </body>
